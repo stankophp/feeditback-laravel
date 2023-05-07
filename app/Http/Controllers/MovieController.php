@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Filters\MovieFilter;
 use App\Models\Movie;
 use Illuminate\Http\Request;
 use Spatie\Searchable\Search;
@@ -9,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class MovieController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, MovieFilter $filter)
     {
         /**
          * A user can filter movies by the following:
@@ -28,46 +29,13 @@ class MovieController extends Controller
          * When returning the user data we want to emit the user_id of the user which created the movie.
          * Use a JsonResource to return results
          */
-        $data = [];
+        $movies = $this->getMovies($filter);
 
-        return response()->json(
-            ['data' => Movie::all()],
-            SymfonyResponse::HTTP_OK
-        );
-
-        $movieIDs = [];
-        $searchParams = ['name', 'release_date',];
-        $searchResults = (new Search())
-            ->registerModel(Movie::class, $searchParams)
-            ->search((string)$request->input('search'));
-
-        if ($searchResults->isNotEmpty()) {
-            foreach ($searchResults as $result) {
-                $movieIDs[] = $result->searchable->id;
-            }
+        if ($request->wantsJson()) {
+            return response($movies, SymfonyResponse::HTTP_OK);
         }
 
-        $searchResults = (new Search())
-            ->registerModel(Movie::class, $searchParams)
-            ->search((string)$request->input('search'));
-
-        if ($searchResults->isNotEmpty()) {
-            foreach ($searchResults as $result) {
-                $movieIDs[] = $result->searchable->id;
-            }
-        }
-
-
-        $data = Movie::whereIn('id', $movieIDs)
-            ->with('actors', 'genres')
-            ->orderBy('id', 'desc')
-            ->get();
-
-        return response()->json(
-            ['data' => $data],
-            SymfonyResponse::HTTP_OK
-        );
-
+        return view('movies.index', compact('movies'));
     }
 
     public function store(Request $request)
@@ -104,5 +72,10 @@ class MovieController extends Controller
             ['data' => $movie],
             SymfonyResponse::HTTP_OK
         );
+    }
+
+    private function getMovies(MovieFilter $filter)
+    {
+        return Movie::latest()->filter($filter)->paginate(10);
     }
 }

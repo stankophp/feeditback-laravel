@@ -28,6 +28,11 @@ class Movie extends Model
     public const RATING_15 = '15';
     public const RATING_18 = '18';
 
+    public function scopeFilter($query, $filters)
+    {
+        return $filters->apply($query);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
