@@ -60,7 +60,7 @@ it('does create a movie without a award_winning field', function () {
     $genres = Genre::factory(2)->create();
     $movie['genres'] = [1,2];
     $response = $this->postJson('/movies', $movie);
-    $response->assertStatus(SymfonyResponse::HTTP_OK);
+    $response->assertStatus(SymfonyResponse::HTTP_CREATED);
 });
 
 it('does create a movie with a award_winning field', function () {
@@ -68,6 +68,38 @@ it('does create a movie with a award_winning field', function () {
     $genres = Genre::factory(2)->create();
     $movie['genres'] = [1,2];
     $response = $this->postJson('/movies', $movie);
-    $response->assertStatus(SymfonyResponse::HTTP_OK);
+    $response->assertStatus(SymfonyResponse::HTTP_CREATED);
+});
+
+it('does update a movie with a award_winning field', function () {
+    $movie = Movie::factory()->create(['award_winning' => 0,]);
+    $genres = Genre::factory(2)->create();
+    $this->assertDatabaseHas(
+        'movies',
+        [
+            'id' => 1,
+            'award_winning' => 0,
+        ]
+    );
+
+    $response = $this->patchJson('/movies/' . $movie->id, [
+        'name' => 'name',
+        'description' => $movie->description,
+        'image' => $movie->image,
+        'rating' => $movie->rating,
+        'release_date' => $movie->release_date,
+        'award_winning' => 1,
+        'genres' => [1],
+    ]);
+    $response->assertStatus(SymfonyResponse::HTTP_ACCEPTED);
+
+    $this->assertDatabaseHas(
+        'movies',
+        [
+            'id' => 1,
+            'name' => 'name',
+            'award_winning' => 1,
+        ]
+    );
 });
 

@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Filters\MovieFilter;
+use App\Http\Requests\MovieStoreRequest;
+use App\Http\Requests\MovieUpdateRequest;
 use App\Models\Movie;
 use Illuminate\Http\Request;
-use Spatie\Searchable\Search;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class MovieController extends Controller
@@ -38,7 +39,7 @@ class MovieController extends Controller
         return view('movies.index', compact('movies'));
     }
 
-    public function store(Request $request)
+    public function store(MovieStoreRequest $request)
     {
         /**
          * A user can create a movie and link it to genres/actors
@@ -46,15 +47,6 @@ class MovieController extends Controller
          * Write code which will allow a user to create the movie with the associated data
          * Be sure to have appropriate validation.
          */
-        $request->validate([
-            'name' => ['required', 'min:1', 'max:240',],
-            'description' => ['required', 'min:1', 'max:2400',],
-            'image' => ['required', ],
-            'release_date' => ['required', 'date'],
-            'rating' => ['required', ],
-            'award_winning' => ['nullable', 'sometimes', 'numeric'],
-            'genres' => ['array', 'required', 'exists:genres,id'],
-        ]);
 
         $movie = new Movie();
         $movie->name = $request->input('name');
@@ -70,7 +62,26 @@ class MovieController extends Controller
 
         return response()->json(
             ['data' => $movie],
-            SymfonyResponse::HTTP_OK
+            SymfonyResponse::HTTP_CREATED
+        );
+    }
+
+    public function update(MovieUpdateRequest $request, Movie $movie)
+    {
+        $movie->update([
+            'name' => $request->input('name'),
+            'description' => $request->input('description'),
+            'image' => $request->input('image'),
+            'rating' => $request->input('rating'),
+            'release_date' => $request->input('release_date'),
+            'award_winning' => (bool)((int)$request->input('award_winning')),
+        ]);
+
+        $movie->genres()->sync($request->input('genres'));
+
+        return response()->json(
+            ['data' => $movie],
+            SymfonyResponse::HTTP_ACCEPTED
         );
     }
 
