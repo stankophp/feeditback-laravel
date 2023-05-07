@@ -20,7 +20,7 @@ class MovieFactory extends Factory
         return [
             'name' => $this->faker->name,
             'user_id' => User::factory(),
-            'description' => $this->faker->paragraph,
+            'description' => $this->faker->word,
             'image' => $this->faker->imageUrl,
             'release_date' => $this->faker->date,
             'rating' => $this->faker->word,

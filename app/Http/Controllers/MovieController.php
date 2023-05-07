@@ -30,6 +30,11 @@ class MovieController extends Controller
          */
         $data = [];
 
+        return response()->json(
+            ['data' => Movie::all()],
+            SymfonyResponse::HTTP_OK
+        );
+
         $movieIDs = [];
         $searchParams = ['name', 'release_date',];
         $searchResults = (new Search())
@@ -60,7 +65,7 @@ class MovieController extends Controller
 
         return response()->json(
             ['data' => $data],
-            SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY
+            SymfonyResponse::HTTP_OK
         );
 
     }
@@ -79,17 +84,18 @@ class MovieController extends Controller
             'image' => ['required', ],
             'release_date' => ['required', 'date'],
             'rating' => ['required', ],
-            'award_winning' => ['nullable',],
+            'award_winning' => ['nullable', 'sometimes', 'numeric'],
             'genres' => ['array', 'required', 'exists:genres,id'],
         ]);
 
         $movie = new Movie();
         $movie->name = $request->input('name');
-        $movie->user_id = auth()->id();
+        $movie->user_id = auth()->id() ?? 1;
         $movie->description = $request->input('description');
         $movie->image = $request->input('image');
         $movie->rating = $request->input('rating');
-        $movie->award_winning = $request->input('award_winning');
+        $movie->release_date = $request->input('release_date');
+        $movie->award_winning = (bool)((int)$request->input('award_winning'));
         $movie->save();
 
         $movie->genres()->sync($request->input('genres'));
