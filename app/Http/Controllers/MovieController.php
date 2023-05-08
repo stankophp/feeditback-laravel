@@ -39,6 +39,15 @@ class MovieController extends Controller
         return view('movies.index', compact('movies'));
     }
 
+    public function show(Request $request, Movie $movie)
+    {
+        $movie->load(['user', 'genres', 'actors']);
+        if ($request->wantsJson()) {
+            return response($movie, SymfonyResponse::HTTP_OK);
+        }
+        return view('movies.show', compact(['movie']));
+    }
+
     public function store(MovieStoreRequest $request)
     {
         /**
@@ -104,6 +113,9 @@ class MovieController extends Controller
 
     private function getMovies(MovieFilter $filter)
     {
-        return Movie::latest()->filter($filter)->paginate(10);
+        return Movie::latest()
+            ->filter($filter)
+            ->with(['user', 'genres', 'actors'])
+            ->paginate(10);
     }
 }

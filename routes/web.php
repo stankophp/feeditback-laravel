@@ -18,4 +18,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::resource('movies', MovieController::class);
+Route::get('movies', [MovieController::class, 'index']);
+Route::get('movies/{movie}', [MovieController::class, 'show']);
+Route::resource('movies', MovieController::class)->middleware('auth')->except('index', 'show');
