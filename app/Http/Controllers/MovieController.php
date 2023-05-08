@@ -85,6 +85,19 @@ class MovieController extends Controller
         );
     }
 
+    public function destroy(Movie $movie)
+    {
+        $this->authorize('update', $movie);
+
+        $movie->delete();
+
+        if (request()->wantsJson()) {
+            return response([], SymfonyResponse::HTTP_ACCEPTED);
+        }
+
+        return redirect('/movies');
+    }
+
     private function getMovies(MovieFilter $filter)
     {
         return Movie::latest()->filter($filter)->paginate(10);

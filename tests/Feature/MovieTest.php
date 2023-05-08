@@ -2,6 +2,7 @@
 
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -71,7 +72,8 @@ it('does create a movie with a award_winning field', function () {
     $response->assertStatus(SymfonyResponse::HTTP_CREATED);
 });
 
-it('does update a movie with a award_winning field', function () {
+it('does update a movie with a award_winning and rating field', function () {
+    $user = User::factory()->create();
     $movie = Movie::factory()->create(['award_winning' => 0,]);
     $genres = Genre::factory(2)->create();
     $this->assertDatabaseHas(
@@ -83,10 +85,10 @@ it('does update a movie with a award_winning field', function () {
     );
 
     $response = $this->patchJson('/movies/' . $movie->id, [
-        'name' => 'name',
+        'name' => 'name and name',
         'description' => $movie->description,
         'image' => $movie->image,
-        'rating' => $movie->rating,
+        'rating' => 6,
         'release_date' => $movie->release_date,
         'award_winning' => 1,
         'genres' => [1],
@@ -97,8 +99,111 @@ it('does update a movie with a award_winning field', function () {
         'movies',
         [
             'id' => 1,
-            'name' => 'name',
+            'name' => 'name and name',
             'award_winning' => 1,
+            'rating' => 6,
+        ]
+    );
+});
+
+it('does not update a movie that does not belong to them', function () {
+    $user1 = User::factory()->create();
+    $this->actingAs($user1);
+
+    $user2 = User::factory()->create();
+    $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user2->id]);
+
+    $this->assertDatabaseHas(
+        'movies',
+        [
+            'id' => 1,
+            'award_winning' => 0,
+        ]
+    );
+
+    $response = $this->patchJson('/movies/' . $movie->id, [
+        'name' => 'name and name',
+        'description' => $movie->description,
+        'image' => $movie->image,
+        'rating' => 6,
+        'release_date' => $movie->release_date,
+        'award_winning' => 1,
+        'genres' => [1],
+    ]);
+    $response->assertStatus(SymfonyResponse::HTTP_FORBIDDEN);
+});
+
+it('does update a movie that does not belong to them', function () {
+    $user1 = User::factory()->create();
+    $this->actingAs($user1);
+
+    $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user1->id]);
+
+    $this->assertDatabaseHas(
+        'movies',
+        [
+            'id' => 1,
+            'award_winning' => 0,
+        ]
+    );
+
+    $response = $this->patchJson('/movies/' . $movie->id, [
+        'name' => 'name and name',
+        'description' => $movie->description,
+        'image' => $movie->image,
+        'rating' => 6,
+        'release_date' => $movie->release_date,
+        'award_winning' => 1,
+        'genres' => [1],
+    ]);
+    $response->assertStatus(SymfonyResponse::HTTP_ACCEPTED);
+
+    $this->assertDatabaseHas(
+        'movies',
+        [
+            'id' => 1,
+            'name' => 'name and name',
+            'award_winning' => 1,
+            'rating' => 6,
+        ]
+    );
+});
+
+it('does not delete a movie that does not belong to them', function () {
+    $user1 = User::factory()->create();
+    $this->actingAs($user1);
+
+    $user2 = User::factory()->create();
+    $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user2->id]);
+
+    $response = $this->delete('/movies/' . $movie->id);
+    $response->assertStatus(SymfonyResponse::HTTP_FORBIDDEN);
+});
+
+it('does delete a movie that does not belong to them', function () {
+    $user1 = User::factory()->create();
+    $this->actingAs($user1);
+
+    $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user1->id]);
+
+    $this->assertDatabaseHas(
+        'movies',
+        [
+            'id' => 1,
+            'award_winning' => 0,
+        ]
+    );
+
+    $response = $this->deleteJson('/movies/' . $movie->id);
+    $response->assertStatus(SymfonyResponse::HTTP_ACCEPTED);
+
+    $this->assertDatabaseMissing(
+        'movies',
+        [
+            'id' => 1,
+            'name' => 'name and name',
+            'award_winning' => 1,
+            'rating' => 6,
         ]
     );
 });

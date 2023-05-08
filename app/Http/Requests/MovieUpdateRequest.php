@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class MovieUpdateRequest extends FormRequest
 {
@@ -13,7 +14,9 @@ class MovieUpdateRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        $movie = $this->route()->parameter('movie');
+
+        return Gate::allows('update', $movie);
     }
 
     /**
@@ -28,8 +31,8 @@ class MovieUpdateRequest extends FormRequest
             'description' => ['required', 'min:1', 'max:2400',],
             'image' => ['required', ],
             'release_date' => ['required', 'date'],
-            'rating' => ['required', ],
-            'award_winning' => ['nullable', 'sometimes', 'numeric'],
+            'rating' => ['required', 'min:1', 'max:10', 'numeric',],
+            'award_winning' => ['nullable', 'sometimes', 'numeric',],
             'genres' => ['array', 'required', 'exists:genres,id'],
         ];
     }
