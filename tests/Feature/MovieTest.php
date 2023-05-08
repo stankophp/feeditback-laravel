@@ -57,6 +57,8 @@ it('does not create a movie without a rating field', function () {
 });
 
 it('does create a movie without a award_winning field', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
     $movie = Movie::factory()->create(['award_winning' => 0,])->toArray();
     $genres = Genre::factory(2)->create();
     $movie['genres'] = [1,2];
@@ -65,6 +67,8 @@ it('does create a movie without a award_winning field', function () {
 });
 
 it('does create a movie with a award_winning field', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
     $movie = Movie::factory()->create(['award_winning' => 1,])->toArray();
     $genres = Genre::factory(2)->create();
     $movie['genres'] = [1,2];
@@ -74,7 +78,8 @@ it('does create a movie with a award_winning field', function () {
 
 it('does update a movie with a award_winning and rating field', function () {
     $user = User::factory()->create();
-    $movie = Movie::factory()->create(['award_winning' => 0,]);
+    $this->actingAs($user);
+    $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user->id]);
     $genres = Genre::factory(2)->create();
     $this->assertDatabaseHas(
         'movies',
@@ -113,14 +118,6 @@ it('does not update a movie that does not belong to them', function () {
     $user2 = User::factory()->create();
     $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user2->id]);
 
-    $this->assertDatabaseHas(
-        'movies',
-        [
-            'id' => 1,
-            'award_winning' => 0,
-        ]
-    );
-
     $response = $this->patchJson('/movies/' . $movie->id, [
         'name' => 'name and name',
         'description' => $movie->description,
@@ -133,12 +130,12 @@ it('does not update a movie that does not belong to them', function () {
     $response->assertStatus(SymfonyResponse::HTTP_FORBIDDEN);
 });
 
-it('does update a movie that does not belong to them', function () {
+it('does update a movie that does belong to them', function () {
     $user1 = User::factory()->create();
     $this->actingAs($user1);
 
     $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user1->id]);
-
+    $genres = Genre::factory(2)->create();
     $this->assertDatabaseHas(
         'movies',
         [
@@ -174,7 +171,7 @@ it('does not delete a movie that does not belong to them', function () {
     $this->actingAs($user1);
 
     $user2 = User::factory()->create();
-    $movie = Movie::factory()->create(['award_winning' => 0, 'user_id' => $user2->id]);
+    $movie = Movie::factory()->create(['user_id' => $user2->id]);
 
     $response = $this->delete('/movies/' . $movie->id);
     $response->assertStatus(SymfonyResponse::HTTP_FORBIDDEN);
@@ -190,7 +187,6 @@ it('does delete a movie that does not belong to them', function () {
         'movies',
         [
             'id' => 1,
-            'award_winning' => 0,
         ]
     );
 
@@ -201,9 +197,6 @@ it('does delete a movie that does not belong to them', function () {
         'movies',
         [
             'id' => 1,
-            'name' => 'name and name',
-            'award_winning' => 1,
-            'rating' => 6,
         ]
     );
 });

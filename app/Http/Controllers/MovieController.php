@@ -50,7 +50,7 @@ class MovieController extends Controller
 
         $movie = new Movie();
         $movie->name = $request->input('name');
-        $movie->user_id = auth()->id() ?? 1;
+        $movie->user_id = auth()->id();
         $movie->description = $request->input('description');
         $movie->image = $request->input('image');
         $movie->rating = $request->input('rating');
@@ -79,19 +79,23 @@ class MovieController extends Controller
 
         $movie->genres()->sync($request->input('genres'));
 
-        return response()->json(
-            ['data' => $movie],
-            SymfonyResponse::HTTP_ACCEPTED
-        );
+        if ($request->wantsJson()) {
+            return response()->json(
+                ['data' => $movie],
+                SymfonyResponse::HTTP_ACCEPTED
+            );
+        }
+
+        return redirect('/movies');
     }
 
-    public function destroy(Movie $movie)
+    public function destroy(Request $request, Movie $movie)
     {
         $this->authorize('update', $movie);
 
         $movie->delete();
 
-        if (request()->wantsJson()) {
+        if ($request->wantsJson()) {
             return response([], SymfonyResponse::HTTP_ACCEPTED);
         }
 
