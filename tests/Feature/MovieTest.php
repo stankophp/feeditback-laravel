@@ -26,31 +26,55 @@ test('read list of movies', function() {
     $this->assertEquals(1, 1);
 });
 
+test('read single movie', function() {
+    $movie1 = Movie::factory()->make();
+    $response = $this->get('/movies/' . $movie1->id);
+
+    $response->assertStatus(SymfonyResponse::HTTP_OK);
+    $response->assertSee($movie1->title);
+});
+
+it('unauthorised user may not create a movie', function () {
+    $movie = Movie::factory()->create(['name' => ''])->toArray();
+    $response = $this->postJson('/movies', $movie);
+    $response->assertStatus(SymfonyResponse::HTTP_UNAUTHORIZED);
+});
+
 it('does not create a movie without a name field', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
     $movie = Movie::factory()->create(['name' => ''])->toArray();
     $response = $this->postJson('/movies', $movie);
     $response->assertStatus(SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
 });
 
 it('does not create a movie without a description field', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
     $movie = Movie::factory()->create(['description' => ''])->toArray();
     $response = $this->postJson('/movies', $movie);
     $response->assertStatus(SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
 });
 
 it('does not create a movie without a image field', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
     $movie = Movie::factory()->create(['image' => ''])->toArray();
     $response = $this->postJson('/movies', $movie);
     $response->assertStatus(SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
 });
 
 it('does not create a movie without a release_date field', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
     $movie = Movie::factory()->create(['release_date' => ''])->toArray();
     $response = $this->postJson('/movies', $movie);
     $response->assertStatus(SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
 });
 
 it('does not create a movie without a rating field', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
     $movie = Movie::factory()->create(['rating' => ''])->toArray();
     $response = $this->postJson('/movies', $movie);
     $response->assertStatus(SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
@@ -74,6 +98,20 @@ it('does create a movie with a award_winning field', function () {
     $movie['genres'] = [1,2];
     $response = $this->postJson('/movies', $movie);
     $response->assertStatus(SymfonyResponse::HTTP_CREATED);
+});
+
+it('unauthorised user may not update a movie', function () {
+    $movie = Movie::factory()->create();
+    $response = $this->patchJson('/movies/' . $movie->id, [
+        'name' => 'name and name',
+        'description' => $movie->description,
+        'image' => $movie->image,
+        'rating' => 6,
+        'release_date' => $movie->release_date,
+        'award_winning' => 1,
+        'genres' => [1],
+    ]);
+    $response->assertStatus(SymfonyResponse::HTTP_UNAUTHORIZED);
 });
 
 it('does update a movie with a award_winning and rating field', function () {
