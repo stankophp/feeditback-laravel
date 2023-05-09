@@ -23,7 +23,6 @@ test('read list of movies', function() {
     $response->assertSee($movie1->title);
     $response->assertSee($movie2->title);
     $response->assertSee($movie3->title);
-    $this->assertEquals(1, 1);
 });
 
 test('read single movie', function() {
@@ -36,7 +35,7 @@ test('read single movie', function() {
 });
 
 it('unauthorised user may not create a movie', function () {
-    $movie = Movie::factory()->create(['name' => ''])->toArray();
+    $movie = Movie::factory()->create()->toArray();
     $response = $this->postJson('/movies', $movie);
     $response->assertStatus(SymfonyResponse::HTTP_UNAUTHORIZED);
 });
