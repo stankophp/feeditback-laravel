@@ -17,7 +17,7 @@ test('read list of movies', function() {
     $movie1 = Movie::factory()->make();
     $movie2 = Movie::factory()->make();
     $movie3 = Movie::factory()->make();
-    $response = $this->get('/movies');
+    $response = $this->getJson('/movies');
 
     $response->assertStatus(SymfonyResponse::HTTP_OK);
     $response->assertSee($movie1->title);
@@ -27,11 +27,12 @@ test('read list of movies', function() {
 });
 
 test('read single movie', function() {
-    $movie1 = Movie::factory()->make();
-    $response = $this->get('/movies/' . $movie1->id);
+    $movie1 = Movie::factory()->create();
+    $response = $this->getJson('/movies/' . $movie1->id);
 
     $response->assertStatus(SymfonyResponse::HTTP_OK);
     $response->assertSee($movie1->title);
+    $response->assertSee($movie1->description);
 });
 
 it('unauthorised user may not create a movie', function () {
@@ -168,7 +169,7 @@ it('does not update a movie that does not belong to them', function () {
     $response->assertStatus(SymfonyResponse::HTTP_FORBIDDEN);
 });
 
-it('does update a movie that does belong to them', function () {
+it('does update a movie that belongs to them', function () {
     $user1 = User::factory()->create();
     $this->actingAs($user1);
 
@@ -204,6 +205,12 @@ it('does update a movie that does belong to them', function () {
     );
 });
 
+it('unauthorised user may not delete a movie', function () {
+    $movie = Movie::factory()->create();
+    $response = $this->deleteJson('/movies/' . $movie->id);
+    $response->assertStatus(SymfonyResponse::HTTP_UNAUTHORIZED);
+});
+
 it('does not delete a movie that does not belong to them', function () {
     $user1 = User::factory()->create();
     $this->actingAs($user1);
@@ -211,11 +218,11 @@ it('does not delete a movie that does not belong to them', function () {
     $user2 = User::factory()->create();
     $movie = Movie::factory()->create(['user_id' => $user2->id]);
 
-    $response = $this->delete('/movies/' . $movie->id);
+    $response = $this->deleteJson('/movies/' . $movie->id);
     $response->assertStatus(SymfonyResponse::HTTP_FORBIDDEN);
 });
 
-it('does delete a movie that does not belong to them', function () {
+it('does delete a movie that belongs to them', function () {
     $user1 = User::factory()->create();
     $this->actingAs($user1);
 
